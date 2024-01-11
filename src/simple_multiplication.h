@@ -24,6 +24,8 @@ Matrix<T> SimpleMultiplication(const Matrix<T>& lhs, const Matrix<T>& rhs) {
 
 template <class T>
 Matrix<T> SimpleMultiplicationWithTranspose(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+    assert(lhs.Columns() == rhs.Rows());
+
     Matrix<T> result(lhs.Rows(), rhs.Columns());
     Matrix<T> rhs_t = rhs.Transpose();
 

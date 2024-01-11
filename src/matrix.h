@@ -24,6 +24,7 @@ public:
           columns_(matrix.empty() ? 0 : matrix.back().size()) {
 
         for (size_t row = 0; row < rows_; ++row) {
+            assert(matrix[row].size() == columns_);
             for (size_t column = 0; column < columns_; ++column) {
                 (*this)(row, column) = matrix[row][column];
             }
