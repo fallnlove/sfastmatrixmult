@@ -11,7 +11,7 @@ public:
     Matrix() : rows_(0), columns_(0) {
     }
 
-    Matrix(size_t n) : data_(n * n, 0), rows_(n), columns_(n) {
+    explicit Matrix(size_t n) : data_(n * n, 0), rows_(n), columns_(n) {
     }
 
     Matrix(size_t rows, size_t columns) : data_(rows * columns, 0), rows_(rows), columns_(columns) {
@@ -45,16 +45,20 @@ public:
         return data_[row * columns_ + column];
     }
 
-    Matrix<T>& operator+=(Matrix<T> other) {
-        for (size_t i = 0; i < rows_ * columns_; ++i) {
-            data_[i] += other[i];
+    Matrix<T>& operator+=(const Matrix<T>& other) {
+        for (size_t row = 0; row < rows_; ++row) {
+            for (size_t column = 0; column < columns_; ++column) {
+                (*this)(row, column) += other(row, column);
+            }
         }
         return *this;
     }
 
-    Matrix<T>& operator-=(Matrix<T> other) {
-        for (size_t i = 0; i < rows_ * columns_; ++i) {
-            data_[i] -= other[i];
+    Matrix<T>& operator-=(const Matrix<T>& other) {
+        for (size_t row = 0; row < rows_; ++row) {
+            for (size_t column = 0; column < columns_; ++column) {
+                (*this)(row, column) -= other(row, column);
+            }
         }
         return *this;
     }
