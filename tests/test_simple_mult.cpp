@@ -12,7 +12,7 @@ TEST(SimpleMultTest, Correctness3x3) {
 
     s_fast::Matrix<int> return_val = s_fast::SimpleMultiplication(a, b);
 
-    EXPECT_TRUE(IsEqualMatrix<int>(res, return_val));
+    EXPECT_TRUE(s_fast::utils::IsEqualMatrix<int>(res, return_val));
 }
 
 TEST(SimpleMultWithTransposeTest, Correctness3x3) {
@@ -22,5 +22,5 @@ TEST(SimpleMultWithTransposeTest, Correctness3x3) {
 
     s_fast::Matrix<int> return_val = s_fast::SimpleMultiplicationWithTranspose(a, b);
 
-    EXPECT_TRUE(IsEqualMatrix<int>(res, return_val));
+    EXPECT_TRUE(s_fast::utils::IsEqualMatrix<int>(res, return_val));
 }

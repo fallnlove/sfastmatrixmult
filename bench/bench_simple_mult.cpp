@@ -52,13 +52,11 @@ static void BenchSimpleMultWithTranspose(benchmark::State& state) {
     }
 }
 
-// BENCHMARK(BmSomeFunction)->Iterations(10);
-
-BENCHMARK(BenchSimpleMult)->Iterations(10)->Unit(benchmark::kSecond)->Args({1000, 500, 1000});
+BENCHMARK(BenchSimpleMult)->Iterations(10)->Unit(benchmark::kSecond)->Args({1000, 1000, 1000});
 
 BENCHMARK(BenchSimpleMultWithTranspose)
     ->Iterations(10)
     ->Unit(benchmark::kSecond)
-    ->Args({1000, 500, 1000});
+    ->Args({1000, 1000, 1000});
 
 BENCHMARK_MAIN();
