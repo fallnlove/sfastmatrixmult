@@ -27,7 +27,7 @@ Matrix<T> SimpleMultiplicationWithTranspose(const Matrix<T>& lhs, const Matrix<T
     assert(lhs.Columns() == rhs.Rows());
 
     Matrix<T> result(lhs.Rows(), rhs.Columns());
-    Matrix<T> rhs_t = rhs.Transpose();
+    Matrix<T> rhs_t = Transpose(rhs);
 
     for (size_t row = 0; row < lhs.Rows(); ++row) {
         for (size_t column = 0; column < rhs.Columns(); ++column) {

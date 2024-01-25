@@ -4,95 +4,105 @@
 #include <cstddef>
 #include <vector>
 
+#include "helper.h"
+
 namespace s_fast {
 
 template <class T>
 class Matrix {
 public:
-    Matrix() : rows_(0), columns_(0) {
+    using Index = int64_t;
+    using ReturnElementType = helper::ReturnAs<T>;
+
+    Matrix() = default;
+
+    Matrix(const Matrix& other) = default;
+
+    Matrix(Matrix&& other) noexcept : data_(std::move(other.data_)), columns_(other.columns_) {
+        other.columns_ = 0;
     }
 
-    explicit Matrix(size_t n) : data_(n * n, 0), rows_(n), columns_(n) {
+    Matrix& operator=(const Matrix& other) = default;
+
+    Matrix& operator=(Matrix&& other) noexcept {
+        data_ = std::move(other.data_);
+        columns_ = other.columns_;
+
+        other.columns_ = 0;
+
+        return *this;
     }
 
-    Matrix(size_t rows, size_t columns) : data_(rows * columns, 0), rows_(rows), columns_(columns) {
+    explicit Matrix(Index n) : data_(n * n, 0), columns_(n) {
     }
 
-    Matrix(const std::vector<std::vector<T>>& matrix)
-        : data_(matrix.empty() ? 0 : matrix.size() * matrix.back().size()),
-          rows_(matrix.size()),
-          columns_(matrix.empty() ? 0 : matrix.back().size()) {
+    Matrix(Index rows, Index columns) : data_(rows * columns, 0), columns_(columns) {
+    }
 
-        for (size_t row = 0; row < rows_; ++row) {
-            assert(matrix[row].size() == columns_);
-            for (size_t column = 0; column < columns_; ++column) {
-                (*this)(row, column) = matrix[row][column];
+    Matrix(std::initializer_list<std::initializer_list<T>> data)
+        : data_(std::empty(data) ? 0 : data.size() * data.begin()->size()),
+          columns_(std::empty(data) ? 0 : data.begin()->size()) {
+
+        Index i = 0;
+
+        for (const auto& row : data) {
+            assert(row.size() == Columns() && "All rows must have the same size!");
+            for (const auto& element : row) {
+                data_[i] = element;
+                ++i;
             }
         }
     }
 
-    size_t Rows() const {
-        return rows_;
+    Index Rows() const {
+        return columns_ == 0 ? 0 : data_.size() / columns_;
     }
 
-    size_t Columns() const {
+    Index Columns() const {
         return columns_;
     }
 
-    T& operator()(size_t row, size_t column) {
-        assert(row < rows_ && column < columns_);
+    T& operator()(Index row, Index column) {
+        assert(row < Rows() && column < Columns());
 
-        return data_[row * columns_ + column];
+        return data_[row * Columns() + column];
     }
 
-    const T& operator()(size_t row, size_t column) const {
-        assert(row < rows_ && column < columns_);
+    ReturnElementType operator()(Index row, Index column) const {
+        assert(row < Rows() && column < Columns());
 
-        return data_[row * columns_ + column];
+        return data_[row * Columns() + column];
     }
 
     Matrix<T>& operator+=(const Matrix<T>& other) {
-        assert(rows_ == other.Rows() && columns_ == other.Columns());
+        assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (size_t row = 0; row < rows_; ++row) {
-            for (size_t column = 0; column < columns_; ++column) {
-                (*this)(row, column) += other(row, column);
-            }
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] += other.data_[i];
         }
 
         return *this;
     }
 
     Matrix<T>& operator-=(const Matrix<T>& other) {
-        assert(rows_ == other.Rows() && columns_ == other.Columns());
+        assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (size_t row = 0; row < rows_; ++row) {
-            for (size_t column = 0; column < columns_; ++column) {
-                (*this)(row, column) -= other(row, column);
-            }
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] -= other.data_[i];
         }
 
         return *this;
     }
 
-    Matrix<T> Transpose() const {
-        Matrix<T> transpose(columns_, rows_);
-        for (size_t row = 0; row < rows_; ++row) {
-            for (size_t column = 0; column < columns_; ++column) {
-                transpose(column, row) = (*this)(row, column);
-            }
-        }
-        return transpose;
-    }
-
-    // This function can be made more faster
+    // This function can be made much faster
     Matrix<T> GetSubMatrix(std::pair<size_t, size_t> begin, std::pair<size_t, size_t> end) const {
         assert(end.first >= begin.first && end.second >= begin.second);
         Matrix<T> sub_matrix(end.first - begin.first + 1, end.second - begin.second + 1);
 
-        for (size_t row = begin.first; row < std::min(rows_, end.first + 1); ++row) {
-            for (size_t column = begin.second; column < std::min(columns_, end.second + 1);
-                 ++column) {
+        for (size_t row = begin.first; row < std::min(Rows(), static_cast<int64_t>(end.first) + 1);
+             ++row) {
+            for (size_t column = begin.second;
+                 column < std::min(Columns(), static_cast<int64_t>(end.second) + 1); ++column) {
                 sub_matrix(row - begin.first, column - begin.second) = (*this)(row, column);
             }
         }
@@ -102,8 +112,7 @@ public:
 
 private:
     std::vector<T> data_;
-    size_t rows_;
-    size_t columns_;
+    Index columns_ = 0;
 };
 
 template <class T>
@@ -118,6 +127,19 @@ Matrix<T> operator-(const Matrix<T>& lhs, const Matrix<T>& rhs) {
     Matrix<T> tmp(lhs);
     tmp -= rhs;
     return tmp;
+}
+
+template <class T>
+Matrix<T> Transpose(const Matrix<T>& other) {
+    Matrix<T> transpose(other.Columns(), other.Rows());
+
+    for (size_t row = 0; row < other.Rows(); ++row) {
+        for (size_t column = 0; column < other.Columns(); ++column) {
+            transpose(column, row) = other(row, column);
+        }
+    }
+
+    return transpose;
 }
 
 template <class T>

@@ -19,7 +19,7 @@ TEST(MatrixCorrection, Constructors) {
     EXPECT_EQ(c.Columns(), 14);
 
     std::vector<std::vector<int>> mat = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
-    s_fast::Matrix<int> d(mat);
+    s_fast::Matrix<int> d({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}});
     for (size_t i = 0; i < mat.size(); ++i) {
         for (size_t j = 0; j < mat[i].size(); ++j) {
             EXPECT_EQ(d(i, j), mat[i][j]);
@@ -45,10 +45,10 @@ TEST(MatrixCorrection, Minus) {
 
 TEST(MatrixCorrection, Transpose) {
     s_fast::Matrix<int> a({{1, 0, 0}, {0, 5, 0}, {0, 0, 9}});
-    EXPECT_TRUE(s_fast::utils::IsEqualMatrix(a.Transpose(), a));
+    EXPECT_TRUE(s_fast::utils::IsEqualMatrix(Transpose(a), a));
 
     s_fast::Matrix<int> b({{3, 2, 1}, {6, 5, 4}, {9, 8, 7}});
     s_fast::Matrix<int> c({{3, 6, 9}, {2, 5, 8}, {1, 4, 7}});
-    EXPECT_TRUE(s_fast::utils::IsEqualMatrix(b.Transpose(), c));
-    EXPECT_TRUE(s_fast::utils::IsEqualMatrix(c.Transpose(), b));
+    EXPECT_TRUE(s_fast::utils::IsEqualMatrix(Transpose(b), c));
+    EXPECT_TRUE(s_fast::utils::IsEqualMatrix(Transpose(c), b));
 }

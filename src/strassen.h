@@ -34,9 +34,11 @@ std::vector<Matrix<T>> GetSubMatrixes(const Matrix<T>& matrix) {
 
 template <class T>
 void SetSubMatrix(Matrix<T>& to, const Matrix<T>& from, std::pair<size_t, size_t> begin) {
-    for (size_t row = begin.first; row < std::min(to.Rows(), from.Rows() + begin.first); ++row) {
+    for (size_t row = begin.first;
+         row < std::min(to.Rows(), from.Rows() + static_cast<int64_t>(begin.first)); ++row) {
         for (size_t column = begin.second;
-             column < std::min(to.Columns(), from.Columns() + begin.second); ++column) {
+             column < std::min(to.Columns(), from.Columns() + static_cast<int64_t>(begin.second));
+             ++column) {
             to(row, column) = from(row - begin.first, column - begin.second);
         }
     }

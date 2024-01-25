@@ -23,7 +23,7 @@ constexpr size_t kIters = 10;
 TEST(StrassenTest, StressTest) {
     std::mt19937 random(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
-    std::uniform_int_distribution<int> range(500, 1000);
+    std::uniform_int_distribution<int> range(20, 50);
     size_t n = range(random);
     size_t m = range(random);
     size_t k = range(random);

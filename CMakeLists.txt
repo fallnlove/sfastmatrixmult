@@ -29,6 +29,12 @@ target_link_libraries(
   benchmark::benchmark
 )
 
+target_compile_options(
+  bench_mult
+  PUBLIC
+  $<$<CONFIG:Release>:RELEASE_MODE>
+)
+
 target_link_libraries(
   test_mult
   GTest::gtest_main
