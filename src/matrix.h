@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <random>
 #include <vector>
 
 #include "helper.h"
@@ -94,6 +95,14 @@ public:
         return *this;
     }
 
+    Matrix<T>& operator*=(const T& element) {
+        for (size_t i = 0; i < data_.size(); ++i) {
+            data_[i] *= element;
+        }
+
+        return *this;
+    }
+
     // This function can be made much faster
     Matrix<T> GetSubMatrix(std::pair<size_t, size_t> begin, std::pair<size_t, size_t> end) const {
         assert(end.first >= begin.first && end.second >= begin.second);
@@ -113,6 +122,27 @@ public:
 private:
     std::vector<T> data_;
     Index columns_ = 0;
+
+    template <class Y>
+    friend Matrix<Y> operator+(const Matrix<Y>& lhs, const Matrix<Y>& rhs);
+    template <class Y>
+    friend Matrix<Y> operator+(Matrix<Y>&& lhs, const Matrix<Y>& rhs);
+    template <class Y>
+    friend Matrix<Y> operator+(const Matrix<Y>& lhs, Matrix<Y>&& rhs);
+    template <class Y>
+    friend Matrix<Y> operator+(Matrix<Y>&& lhs, Matrix<Y>&& rhs);
+
+    template <class Y>
+    friend Matrix<Y> operator-(const Matrix<Y>& lhs, const Matrix<Y>& rhs);
+    template <class Y>
+    friend Matrix<Y> operator-(Matrix<Y>&& lhs, const Matrix<Y>& rhs);
+    template <class Y>
+    friend Matrix<Y> operator-(const Matrix<Y>& lhs, Matrix<Y>&& rhs);
+    template <class Y>
+    friend Matrix<Y> operator-(Matrix<Y>&& lhs, Matrix<Y>&& rhs);
+
+    template <class Y>
+    friend bool operator==(const Matrix<Y>& lhs, const Matrix<Y>& rhs);
 };
 
 template <class T>
@@ -121,6 +151,21 @@ Matrix<T> operator+(const Matrix<T>& lhs, const Matrix<T>& rhs) {
     tmp += rhs;
     return tmp;
 }
+template <class T>
+Matrix<T> operator+(Matrix<T>&& lhs, const Matrix<T>& rhs) {
+    lhs += rhs;
+    return lhs;
+}
+template <class T>
+Matrix<T> operator+(const Matrix<T>& lhs, Matrix<T>&& rhs) {
+    rhs += lhs;
+    return rhs;
+}
+template <class T>
+Matrix<T> operator+(Matrix<T>&& lhs, Matrix<T>&& rhs) {
+    lhs += rhs;
+    return lhs;
+}
 
 template <class T>
 Matrix<T> operator-(const Matrix<T>& lhs, const Matrix<T>& rhs) {
@@ -128,7 +173,34 @@ Matrix<T> operator-(const Matrix<T>& lhs, const Matrix<T>& rhs) {
     tmp -= rhs;
     return tmp;
 }
+template <class T>
+Matrix<T> operator-(Matrix<T>&& lhs, const Matrix<T>& rhs) {
+    lhs -= rhs;
+    return lhs;
+}
+template <class T>
+Matrix<T> operator-(const Matrix<T>& lhs, Matrix<T>&& rhs) {
+    rhs *= -1;
+    rhs += lhs;
+    return rhs;
+}
+template <class T>
+Matrix<T> operator-(Matrix<T>&& lhs, Matrix<T>&& rhs) {
+    lhs -= rhs;
+    return lhs;
+}
 
+template <class T>
+bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+    return lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns() && lhs.data_ == rhs.data_;
+}
+
+template <class T>
+bool operator!=(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+    return !(lhs == rhs);
+}
+
+//  TODO: cache-oblivious transpose
 template <class T>
 Matrix<T> Transpose(const Matrix<T>& other) {
     Matrix<T> transpose(other.Columns(), other.Rows());
@@ -150,6 +222,23 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T>& matrix) {
         }
     }
     return os;
+}
+
+template <class T, class Distribution>
+Matrix<T> Random(typename Matrix<T>::Index rows, typename Matrix<T>::Index columns,
+                 Distribution distribution) {
+    using Index = typename Matrix<T>::Index;
+
+    Matrix<T> random_matrix(rows, columns);
+    std::mt19937 random(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+
+    for (Index i = 0; i < rows; ++i) {
+        for (Index j = 0; j < columns; ++j) {
+            random_matrix(i, j) = distribution(random);
+        }
+    }
+
+    return random_matrix;
 }
 
 }  // namespace s_fast

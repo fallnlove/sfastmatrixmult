@@ -3,29 +3,40 @@
 #include <random>
 
 #include "../src/strassen.h"
+#include "bench_constants.h"
 
-static void BenchStrassen(benchmark::State& state) {
-    std::random_device random_device;
-    std::mt19937 random_gen(random_device());
+namespace {
+
+void BenchStrassen(benchmark::State& state) {
+    using bench_utils::BenchmarkConstants;
+    using s_fast::Matrix;
+    using s_fast::Random;
+    using s_fast::Strassen;
 
     size_t n = state.range(0);
     size_t m = state.range(1);
     size_t k = state.range(2);
 
-    s_fast::Matrix<double> a(n, m);
-    s_fast::Matrix<double> b(m, k);
-
-    std::uniform_real_distribution<double> range_double(-1000., 1000.);
-
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t j = 0; j < m; ++j) {
-            a(i, j) = range_double(random_gen);
-        }
-    }
+    Matrix<double> a = Random<double>(
+        n, m,
+        std::uniform_real_distribution<double>(BenchmarkConstants::kMinElementValue,
+                                               BenchmarkConstants::kMaxElementValue));
+    Matrix<double> b = Random<double>(
+        m, k,
+        std::uniform_real_distribution<double>(BenchmarkConstants::kMinElementValue,
+                                               BenchmarkConstants::kMaxElementValue));
 
     for (auto _ : state) {
-        s_fast::Strassen(a, b);
+        Matrix<double> result = Strassen(a, b);
+        benchmark::DoNotOptimize(result);
     }
 }
 
-BENCHMARK(BenchStrassen)->Iterations(10)->Unit(benchmark::kSecond)->Args({1000, 1000, 1000});
+}  // namespace
+
+BENCHMARK(BenchStrassen)
+    ->Iterations(bench_utils::BenchmarkConstants::kIterationCount)
+    ->Unit(benchmark::kSecond)
+    ->Args({bench_utils::BenchmarkConstants::kRowsLeftMatrix,
+            bench_utils::BenchmarkConstants::kColumnsLeftMatrix,
+            bench_utils::BenchmarkConstants::kColumnsRightMatrix});
