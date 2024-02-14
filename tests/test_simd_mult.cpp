@@ -1,15 +1,13 @@
 #include <gtest/gtest.h>
 #include <cstddef>
 #include <cstdint>
-#include <chrono>
-#include <random>
 
-#include "../src/strassen.h"
+#include "../src/simd_multiplication.h"
 #include "../src/simple_multiplication.h"
 
 namespace {
 
-class StrassenTest : public ::testing::Test {
+class SimdMultTest : public ::testing::Test {
 protected:
     using Index = s_fast::Matrix<int>::Index;
 
@@ -32,19 +30,19 @@ protected:
 
 }  // namespace
 
-TEST_F(StrassenTest, Correctness3x3) {
+TEST_F(SimdMultTest, Correctness3x3) {
     using s_fast::Matrix;
 
     Matrix<int> a({{1, 6, 3}, {2, -4, 2}, {0, 8, 3}});
     Matrix<int> b({{-3, 4, 0}, {1, -5, 4}, {2, 0, 0}});
     Matrix<int> res({{9, -26, 24}, {-6, 28, -16}, {14, -40, 32}});
 
-    Matrix<int> return_val = s_fast::Strassen(a, b);
+    Matrix<int> return_val = s_fast::SimdMultiplication(a, b);
 
     EXPECT_TRUE(res == return_val);
 }
 
-TEST_F(StrassenTest, StressTest) {
+TEST_F(SimdMultTest, StressTest) {
     using s_fast::Matrix;
     using s_fast::Random;
 
@@ -56,6 +54,6 @@ TEST_F(StrassenTest, StressTest) {
         Matrix<int> a = Random<int>(n, m, std::uniform_int_distribution<int>(0, 1));
         Matrix<int> b = Random<int>(m, k, std::uniform_int_distribution<int>(0, 1));
 
-        EXPECT_TRUE(s_fast::SimpleMultiplication(a, b) == s_fast::Strassen(a, b));
+        EXPECT_TRUE(s_fast::SimpleMultiplication(a, b) == s_fast::SimdMultiplication(a, b));
     }
 }

@@ -104,14 +104,13 @@ public:
     }
 
     // This function can be made much faster
-    Matrix<T> GetSubMatrix(std::pair<size_t, size_t> begin, std::pair<size_t, size_t> end) const {
+    Matrix<T> GetSubMatrix(std::pair<Index, Index> begin, std::pair<Index, Index> end) const {
         assert(end.first >= begin.first && end.second >= begin.second);
         Matrix<T> sub_matrix(end.first - begin.first + 1, end.second - begin.second + 1);
 
-        for (size_t row = begin.first; row < std::min(Rows(), static_cast<int64_t>(end.first) + 1);
-             ++row) {
-            for (size_t column = begin.second;
-                 column < std::min(Columns(), static_cast<int64_t>(end.second) + 1); ++column) {
+        for (Index row = begin.first; row < std::min(Rows(), end.first + 1); ++row) {
+            for (Index column = begin.second; column < std::min(Columns(), end.second + 1);
+                 ++column) {
                 sub_matrix(row - begin.first, column - begin.second) = (*this)(row, column);
             }
         }
@@ -123,77 +122,55 @@ private:
     std::vector<T> data_;
     Index columns_ = 0;
 
-    template <class Y>
-    friend Matrix<Y> operator+(const Matrix<Y>& lhs, const Matrix<Y>& rhs);
-    template <class Y>
-    friend Matrix<Y> operator+(Matrix<Y>&& lhs, const Matrix<Y>& rhs);
-    template <class Y>
-    friend Matrix<Y> operator+(const Matrix<Y>& lhs, Matrix<Y>&& rhs);
-    template <class Y>
-    friend Matrix<Y> operator+(Matrix<Y>&& lhs, Matrix<Y>&& rhs);
+    inline friend Matrix<T> operator+(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+        Matrix<T> tmp(lhs);
+        tmp += rhs;
+        return tmp;
+    }
+    inline friend Matrix<T> operator+(Matrix<T>&& lhs, const Matrix<T>& rhs) {
+        Matrix<T> tmp(lhs);
+        tmp += rhs;
+        return tmp;
+    }
+    inline friend Matrix<T> operator+(const Matrix<T>& lhs, Matrix<T>&& rhs) {
+        Matrix<T> tmp(lhs);
+        tmp += rhs;
+        return tmp;
+    }
+    inline friend Matrix<T> operator+(Matrix<T>&& lhs, Matrix<T>&& rhs) {
+        Matrix<T> tmp(lhs);
+        tmp += rhs;
+        return tmp;
+    }
+
+    inline friend Matrix<T> operator-(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+        Matrix<T> tmp(lhs);
+        tmp -= rhs;
+        return tmp;
+    }
+    inline friend Matrix<T> operator-(Matrix<T>&& lhs, const Matrix<T>& rhs) {
+        Matrix<T> tmp(lhs);
+        tmp -= rhs;
+        return tmp;
+    }
+    inline friend Matrix<T> operator-(const Matrix<T>& lhs, Matrix<T>&& rhs) {
+        rhs *= -1;
+        rhs += lhs;
+        return rhs;
+    }
+    inline friend Matrix<T> operator-(Matrix<T>&& lhs, Matrix<T>&& rhs) {
+        Matrix<T> tmp(lhs);
+        tmp -= rhs;
+        return tmp;
+    }
+
+    inline friend bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
+        return lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns() && lhs.data_ == rhs.data_;
+    }
 
     template <class Y>
-    friend Matrix<Y> operator-(const Matrix<Y>& lhs, const Matrix<Y>& rhs);
-    template <class Y>
-    friend Matrix<Y> operator-(Matrix<Y>&& lhs, const Matrix<Y>& rhs);
-    template <class Y>
-    friend Matrix<Y> operator-(const Matrix<Y>& lhs, Matrix<Y>&& rhs);
-    template <class Y>
-    friend Matrix<Y> operator-(Matrix<Y>&& lhs, Matrix<Y>&& rhs);
-
-    template <class Y>
-    friend bool operator==(const Matrix<Y>& lhs, const Matrix<Y>& rhs);
+    friend Matrix<Y> SimdMultiplication(const Matrix<Y>&, const Matrix<Y>&);
 };
-
-template <class T>
-Matrix<T> operator+(const Matrix<T>& lhs, const Matrix<T>& rhs) {
-    Matrix<T> tmp(lhs);
-    tmp += rhs;
-    return tmp;
-}
-template <class T>
-Matrix<T> operator+(Matrix<T>&& lhs, const Matrix<T>& rhs) {
-    lhs += rhs;
-    return lhs;
-}
-template <class T>
-Matrix<T> operator+(const Matrix<T>& lhs, Matrix<T>&& rhs) {
-    rhs += lhs;
-    return rhs;
-}
-template <class T>
-Matrix<T> operator+(Matrix<T>&& lhs, Matrix<T>&& rhs) {
-    lhs += rhs;
-    return lhs;
-}
-
-template <class T>
-Matrix<T> operator-(const Matrix<T>& lhs, const Matrix<T>& rhs) {
-    Matrix<T> tmp(lhs);
-    tmp -= rhs;
-    return tmp;
-}
-template <class T>
-Matrix<T> operator-(Matrix<T>&& lhs, const Matrix<T>& rhs) {
-    lhs -= rhs;
-    return lhs;
-}
-template <class T>
-Matrix<T> operator-(const Matrix<T>& lhs, Matrix<T>&& rhs) {
-    rhs *= -1;
-    rhs += lhs;
-    return rhs;
-}
-template <class T>
-Matrix<T> operator-(Matrix<T>&& lhs, Matrix<T>&& rhs) {
-    lhs -= rhs;
-    return lhs;
-}
-
-template <class T>
-bool operator==(const Matrix<T>& lhs, const Matrix<T>& rhs) {
-    return lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns() && lhs.data_ == rhs.data_;
-}
 
 template <class T>
 bool operator!=(const Matrix<T>& lhs, const Matrix<T>& rhs) {
@@ -203,10 +180,11 @@ bool operator!=(const Matrix<T>& lhs, const Matrix<T>& rhs) {
 //  TODO: cache-oblivious transpose
 template <class T>
 Matrix<T> Transpose(const Matrix<T>& other) {
+    using Index = typename Matrix<T>::Index;
     Matrix<T> transpose(other.Columns(), other.Rows());
 
-    for (size_t row = 0; row < other.Rows(); ++row) {
-        for (size_t column = 0; column < other.Columns(); ++column) {
+    for (Index row = 0; row < other.Rows(); ++row) {
+        for (Index column = 0; column < other.Columns(); ++column) {
             transpose(column, row) = other(row, column);
         }
     }
@@ -216,8 +194,10 @@ Matrix<T> Transpose(const Matrix<T>& other) {
 
 template <class T>
 std::ostream& operator<<(std::ostream& os, const Matrix<T>& matrix) {
-    for (size_t row = 0; row < matrix.Rows(); ++row) {
-        for (size_t column = 0; column < matrix.Columns(); ++column) {
+    using Index = typename Matrix<T>::Index;
+
+    for (Index row = 0; row < matrix.Rows(); ++row) {
+        for (Index column = 0; column < matrix.Columns(); ++column) {
             os << matrix(row, column) << (column == matrix.Columns() - 1 ? "\n" : " ");
         }
     }

@@ -11,8 +11,10 @@ namespace s_fast {
 
 namespace detail {
 
-size_t GetNearestPowerOfTwo(size_t number) {
-    size_t power_of_two = 1;
+using Index = typename Matrix<int>::Index;
+
+Index GetNearestPowerOfTwo(Index number) {
+    Index power_of_two = 1;
     while (power_of_two < number) {
         power_of_two *= 2;
     }
@@ -21,8 +23,8 @@ size_t GetNearestPowerOfTwo(size_t number) {
 
 template <class T>
 std::vector<Matrix<T>> GetSubMatrixes(const Matrix<T>& matrix) {
-    size_t rows = GetNearestPowerOfTwo(matrix.Rows());
-    size_t columns = GetNearestPowerOfTwo(matrix.Columns());
+    Index rows = GetNearestPowerOfTwo(matrix.Rows());
+    Index columns = GetNearestPowerOfTwo(matrix.Columns());
 
     assert(rows > 1 && columns > 1);
 
@@ -33,12 +35,10 @@ std::vector<Matrix<T>> GetSubMatrixes(const Matrix<T>& matrix) {
 }
 
 template <class T>
-void SetSubMatrix(Matrix<T>& to, const Matrix<T>& from, std::pair<size_t, size_t> begin) {
-    for (size_t row = begin.first;
-         row < std::min(to.Rows(), from.Rows() + static_cast<int64_t>(begin.first)); ++row) {
-        for (size_t column = begin.second;
-             column < std::min(to.Columns(), from.Columns() + static_cast<int64_t>(begin.second));
-             ++column) {
+void SetSubMatrix(Matrix<T>& to, const Matrix<T>& from, std::pair<Index, Index> begin) {
+    for (Index row = begin.first; row < std::min(to.Rows(), from.Rows() + begin.first); ++row) {
+        for (Index column = begin.second;
+             column < std::min(to.Columns(), from.Columns() + begin.second); ++column) {
             to(row, column) = from(row - begin.first, column - begin.second);
         }
     }
