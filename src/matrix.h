@@ -15,6 +15,11 @@ public:
     using Index = int64_t;
     using ReturnElementType = helper::ReturnAs<T>;
 
+    struct Position {
+        Index row;
+        Index column;
+    };
+
     Matrix() = default;
 
     Matrix(const Matrix& other) = default;
@@ -103,15 +108,14 @@ public:
         return *this;
     }
 
-    // This function can be made much faster
-    Matrix<T> GetSubMatrix(std::pair<Index, Index> begin, std::pair<Index, Index> end) const {
-        assert(end.first >= begin.first && end.second >= begin.second);
-        Matrix<T> sub_matrix(end.first - begin.first + 1, end.second - begin.second + 1);
+    Matrix<T> GetSubMatrix(Position begin, Position end) const {
+        assert(end.row > begin.row && end.column > begin.column);
 
-        for (Index row = begin.first; row < std::min(Rows(), end.first + 1); ++row) {
-            for (Index column = begin.second; column < std::min(Columns(), end.second + 1);
-                 ++column) {
-                sub_matrix(row - begin.first, column - begin.second) = (*this)(row, column);
+        Matrix<T> sub_matrix(end.row - begin.row, end.column - begin.column);
+
+        for (Index row = begin.row; row < std::min(Rows(), end.row); ++row) {
+            for (Index column = begin.column; column < std::min(Columns(), end.column); ++column) {
+                sub_matrix(row - begin.row, column - begin.column) = (*this)(row, column);
             }
         }
 
