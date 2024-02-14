@@ -15,10 +15,10 @@ public:
         : matrix_(matrix), begin_(begin), end_(end) {
     }
 
-    ViewMatrix(const ViewMatrix<T>& matrix, Position begin, Position end)
+    ViewMatrix(ViewMatrix<T>& matrix, Position begin, Position end)
         : matrix_(matrix.matrix_),
           begin_({matrix.begin_.row + begin.row, matrix.begin_.column + begin.column}),
-          end_({matrix.end_.row + end.row, matrix.end_.column + end.column}) {
+          end_({matrix.begin_.row + end.row, matrix.begin_.column + end.column}) {
     }
 
     ViewMatrix() = delete;
@@ -56,7 +56,7 @@ public:
 
         for (Index i = 0; i < Rows(); ++i) {
             for (Index j = 0; j < Columns(); ++j) {
-                matrix_(i, j) += other(i, j);
+                matrix_(begin_.row + i, begin_.column + j) += other(i, j);
             }
         }
 
@@ -68,7 +68,7 @@ public:
 
         for (Index i = 0; i < Rows(); ++i) {
             for (Index j = 0; j < Columns(); ++j) {
-                matrix_(i, j) -= other(i, j);
+                matrix_(begin_.row + i, begin_.column + j) -= other(i, j);
             }
         }
 
@@ -84,7 +84,7 @@ private:
     inline friend Matrix<T> operator+(const ViewMatrix<T>& lhs, const ViewMatrix<T>& rhs) {
         assert(lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns());
 
-        Matrix<T> result;
+        Matrix<T> result(lhs.Rows(), lhs.Columns());
 
         for (Index i = 0; i < lhs.Rows(); ++i) {
             for (Index j = 0; j < lhs.Columns(); ++j) {
@@ -97,7 +97,7 @@ private:
     inline friend Matrix<T> operator-(const ViewMatrix<T>& lhs, const ViewMatrix<T>& rhs) {
         assert(lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns());
 
-        Matrix<T> result;
+        Matrix<T> result(lhs.Rows(), lhs.Columns());
 
         for (Index i = 0; i < lhs.Rows(); ++i) {
             for (Index j = 0; j < lhs.Columns(); ++j) {
