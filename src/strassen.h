@@ -31,7 +31,7 @@ struct BlockMatrix {
 };
 
 template <class T>
-BlockMatrix<T> GetSubMatrixes(ViewMatrix<T>& matrix) {
+BlockMatrix<T> GetSubMatrixes(const Matrix<T>& matrix) {
     Index rows = GetNearestPowerOfTwo(matrix.Rows());
     Index columns = GetNearestPowerOfTwo(matrix.Columns());
 
@@ -53,8 +53,10 @@ void SetSubMatrix(const Matrix<T>& from, std::pair<Index, Index> begin, Matrix<T
     }
 }
 
+}  // namespace detail_strassen
+
 template <class T>
-Matrix<T> Strassen(ViewMatrix<T>& lhs, ViewMatrix<T>& rhs) {
+Matrix<T> Strassen(const Matrix<T>& lhs, const Matrix<T>& rhs) {
     using detail_strassen::BlockMatrix;
     using detail_strassen::GetSubMatrixes;
     using detail_strassen::SetSubMatrix;
@@ -62,38 +64,24 @@ Matrix<T> Strassen(ViewMatrix<T>& lhs, ViewMatrix<T>& rhs) {
     assert(lhs.Columns() == rhs.Rows());
 
     if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 8) {
-        return SimpleMultiplication(GetMatrix(lhs), GetMatrix(rhs));
+        return SimpleMultiplication(lhs, rhs);
     }
 
     BlockMatrix<T> lhs_sub = GetSubMatrixes(lhs);
     BlockMatrix<T> rhs_sub = GetSubMatrixes(rhs);
 
-    Matrix<T> m1 = Strassen(lhs_sub.left_top += lhs_sub.right_bottom,
-                            rhs_sub.left_top += rhs_sub.right_bottom);
-    lhs_sub.left_top -= lhs_sub.right_bottom;
-    rhs_sub.left_top -= rhs_sub.right_bottom;
-
-    Matrix<T> m2 = Strassen(lhs_sub.left_bottom += lhs_sub.right_bottom, rhs_sub.left_top);
-    lhs_sub.left_bottom -= lhs_sub.right_bottom;
-
-    Matrix<T> m3 = Strassen(lhs_sub.left_top, rhs_sub.right_top -= rhs_sub.right_bottom);
-    rhs_sub.right_top += rhs_sub.right_bottom;
-
-    Matrix<T> m4 = Strassen(lhs_sub.right_bottom, rhs_sub.left_bottom -= rhs_sub.left_top);
-    rhs_sub.left_bottom += rhs_sub.left_top;
-
-    Matrix<T> m5 = Strassen(lhs_sub.left_top += lhs_sub.right_top, rhs_sub.right_bottom);
-    lhs_sub.left_top -= lhs_sub.right_top;
-
+    Matrix<T> m1 =
+        Strassen(lhs_sub.left_top + lhs_sub.right_bottom, rhs_sub.left_top + rhs_sub.right_bottom);
+    Matrix<T> m2 =
+        Strassen(lhs_sub.left_bottom + lhs_sub.right_bottom, GetMatrix(rhs_sub.left_top));
+    Matrix<T> m3 = Strassen(GetMatrix(lhs_sub.left_top), rhs_sub.right_top - rhs_sub.right_bottom);
+    Matrix<T> m4 =
+        Strassen(GetMatrix(lhs_sub.right_bottom), rhs_sub.left_bottom - rhs_sub.left_top);
+    Matrix<T> m5 = Strassen(lhs_sub.left_top + lhs_sub.right_top, GetMatrix(rhs_sub.right_bottom));
     Matrix<T> m6 =
-        Strassen(lhs_sub.left_bottom -= lhs_sub.left_top, rhs_sub.left_top += rhs_sub.right_top);
-    lhs_sub.left_bottom += lhs_sub.left_top;
-    rhs_sub.left_top -= rhs_sub.right_top;
-
-    Matrix<T> m7 = Strassen(lhs_sub.right_top -= lhs_sub.right_bottom,
-                            rhs_sub.left_bottom += rhs_sub.right_bottom);
-    lhs_sub.right_top += lhs_sub.right_bottom;
-    rhs_sub.left_bottom -= rhs_sub.right_bottom;
+        Strassen(lhs_sub.left_bottom - lhs_sub.left_top, rhs_sub.left_top + rhs_sub.right_top);
+    Matrix<T> m7 = Strassen(lhs_sub.right_top - lhs_sub.right_bottom,
+                            rhs_sub.left_bottom + rhs_sub.right_bottom);
 
     m7 += m1;
     m7 += m4;
@@ -112,27 +100,6 @@ Matrix<T> Strassen(ViewMatrix<T>& lhs, ViewMatrix<T>& rhs) {
     SetSubMatrix<T>(m1, {m7.Rows(), m7.Columns()}, &result);
 
     return result;
-}
-
-}  // namespace detail_strassen
-
-template <class T>
-Matrix<T> Strassen(const Matrix<T>& lhs, const Matrix<T>& rhs) {
-    using detail_strassen::GetNearestPowerOfTwo;
-    using detail_strassen::SetSubMatrix;
-
-    assert(lhs.Columns() == rhs.Rows());
-
-    Matrix<T> lhs_tmp(GetNearestPowerOfTwo(lhs.Rows()), GetNearestPowerOfTwo(lhs.Columns()));
-    SetSubMatrix(lhs, {0, 0}, &lhs_tmp);
-
-    Matrix<T> rhs_tmp(GetNearestPowerOfTwo(rhs.Rows()), GetNearestPowerOfTwo(rhs.Columns()));
-    SetSubMatrix(rhs, {0, 0}, &rhs_tmp);
-
-    auto lhs_view = ViewMatrix<T>(lhs_tmp, {0, 0}, {lhs.Rows(), lhs.Columns()});
-    auto rhs_view = ViewMatrix<T>(rhs_tmp, {0, 0}, {rhs.Rows(), rhs.Columns()});
-
-    return detail_strassen::Strassen(lhs_view, rhs_view);
 }
 
 }  // namespace s_fast
