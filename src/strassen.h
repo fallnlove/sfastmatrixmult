@@ -13,6 +13,7 @@ namespace s_fast {
 namespace detail_strassen {
 
 using Index = typename Matrix<int>::Index;
+using Position = typename Matrix<int>::Position;
 
 Index GetNearestPowerOfTwo(Index number) {
     Index power_of_two = 1;
@@ -44,11 +45,11 @@ BlockMatrix<T> GetSubMatrixes(const Matrix<T>& matrix) {
 }
 
 template <class T>
-void SetSubMatrix(const Matrix<T>& from, std::pair<Index, Index> begin, Matrix<T>* to) {
-    for (Index row = begin.first; row < std::min(to->Rows(), from.Rows() + begin.first); ++row) {
-        for (Index column = begin.second;
-             column < std::min(to->Columns(), from.Columns() + begin.second); ++column) {
-            (*to)(row, column) = from(row - begin.first, column - begin.second);
+void SetSubMatrix(const Matrix<T>& from, Position begin, Matrix<T>* to) {
+    for (Index row = begin.row; row < std::min(to->Rows(), from.Rows() + begin.row); ++row) {
+        for (Index column = begin.column;
+             column < std::min(to->Columns(), from.Columns() + begin.column); ++column) {
+            (*to)(row, column) = from(row - begin.row, column - begin.column);
         }
     }
 }

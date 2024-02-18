@@ -31,16 +31,6 @@ public:
         return end_.column - begin_.column;
     }
 
-    T& operator()(Index row, Index column) {
-        assert(row < Rows() && column < Columns());
-
-        if (begin_.row + row >= matrix_.Rows() || begin_.column + column >= matrix_.Columns()) {
-            return 0;
-        }
-
-        return matrix_(begin_.row + row, begin_.column + column);
-    }
-
     ReturnElementType operator()(Index row, Index column) const {
         assert(row < Rows() && column < Columns());
 
@@ -107,7 +97,28 @@ private:
 
         return result;
     }
+
+    inline friend bool operator==(const ViewMatrix<T>& lhs, const ViewMatrix<T>& rhs) {
+        if (lhs.Rows() != rhs.Rows() && lhs.Columns() != rhs.Columns()) {
+            return false;
+        }
+
+        for (Index i = 0; i < lhs.Rows(); ++i) {
+            for (Index j = 0; j < lhs.Columns(); ++j) {
+                if (lhs(i, j) != rhs(i, j)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 };
+
+template <class T>
+bool operator!=(const ViewMatrix<T>& lhs, const ViewMatrix<T>& rhs) {
+    return !(lhs == rhs);
+}
 
 template <class T>
 Matrix<T> GetMatrix(const ViewMatrix<T>& view_matrix) {

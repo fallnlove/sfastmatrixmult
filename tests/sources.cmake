@@ -4,4 +4,5 @@ add_executable(
   tests/test_matrix.cpp
   tests/test_strassen.cpp
   tests/test_simd_mult.cpp
+  tests/test_view_matrix.cpp
 )
