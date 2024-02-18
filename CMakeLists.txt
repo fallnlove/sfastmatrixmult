@@ -36,13 +36,9 @@ target_link_libraries(
   benchmark::benchmark
 )
 
-set(COMPILE_RELEASE_OPTIONS "-O3;-DNDEBUG")
-
 target_compile_options(
   bench_mult
   PUBLIC
-  $<$<CONFIG:Release>:${COMPILE_RELEASE_OPTIONS}>
-  $<$<CONFIG:Debug>:${COMPILE_RELEASE_OPTIONS}>
 )
 
 target_link_libraries(

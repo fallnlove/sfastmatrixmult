@@ -39,12 +39,20 @@ public:
         return end_.row - begin_.row;
     }
 
+    Index ExistedRows() const {
+        return std::min(Rows(), matrix_.Rows() - begin_.row);
+    }
+
     Index Columns() const {
         return end_.column - begin_.column;
     }
 
+    Index ExistedColumns() const {
+        return std::min(Columns(), matrix_.Columns() - begin_.column);
+    }
+
     ReturnElementType operator()(Index row, Index column) {
-        assert(begin_.row + row < Rows() && begin_.column + column < Columns());
+        assert(begin_.row + row < matrix_.Rows() && begin_.column + column < matrix_.Columns());
 
         return matrix_(begin_.row + row, begin_.column + column);
     }
@@ -62,9 +70,9 @@ public:
     RawViewMatrix<T, IsConst>& operator+=(const RawViewMatrix<T, IsConst>& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (Index i = begin_.row; i < std::min(matrix_.Rows(), end_.row); ++i) {
-            for (Index j = begin_.column; j < std::min(matrix_.Columns(), end_.column); ++j) {
-                matrix_(i, j) += other(i - begin_.row, j - begin_.column);
+        for (Index i = 0; i < ExistedRows(); ++i) {
+            for (Index j = begin_.column; j < ExistedColumns(); ++j) {
+                matrix_(i + begin_.row, j + begin_.column) += other(i, j);
             }
         }
 
@@ -73,9 +81,9 @@ public:
     RawViewMatrix<T, IsConst>& operator+=(const Matrix<T>& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (Index i = begin_.row; i < std::min(matrix_.Rows(), end_.row); ++i) {
-            for (Index j = begin_.column; j < std::min(matrix_.Columns(), end_.column); ++j) {
-                matrix_(i, j) += other(i - begin_.row, j - begin_.column);
+        for (Index i = 0; i < ExistedRows(); ++i) {
+            for (Index j = begin_.column; j < ExistedColumns(); ++j) {
+                matrix_(i + begin_.row, j + begin_.column) += other(i, j);
             }
         }
 
@@ -85,9 +93,9 @@ public:
     RawViewMatrix<T, IsConst>& operator-=(const RawViewMatrix<T, IsConst>& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (Index i = begin_.row; i < std::min(matrix_.Rows(), end_.row); ++i) {
-            for (Index j = begin_.column; j < std::min(matrix_.Columns(), end_.column); ++j) {
-                matrix_(i, j) -= other(i - begin_.row, j - begin_.column);
+        for (Index i = 0; i < ExistedRows(); ++i) {
+            for (Index j = begin_.column; j < ExistedColumns(); ++j) {
+                matrix_(i + begin_.row, j + begin_.column) -= other(i, j);
             }
         }
 
@@ -96,9 +104,9 @@ public:
     RawViewMatrix<T, IsConst>& operator-=(const Matrix<T>& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (Index i = begin_.row; i < std::min(matrix_.Rows(), end_.row); ++i) {
-            for (Index j = begin_.column; j < std::min(matrix_.Columns(), end_.column); ++j) {
-                matrix_(i, j) -= other(i - begin_.row, j - begin_.column);
+        for (Index i = 0; i < ExistedRows(); ++i) {
+            for (Index j = begin_.column; j < ExistedColumns(); ++j) {
+                matrix_(i + begin_.row, j + begin_.column) -= other(i, j);
             }
         }
 
