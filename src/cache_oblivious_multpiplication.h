@@ -3,7 +3,7 @@
 #include "matrix.h"
 #include "view_matrix.h"
 #include "simple_multiplication.h"
-#include "strassen.h"
+#include "utils.h"
 
 namespace s_fast {
 
@@ -12,7 +12,7 @@ namespace detail_cache_oblivious {
 template <class T>
 void CacheObliviousMult(const ConstViewMatrix<T>& lhs, const ConstViewMatrix<T>& rhs,
                         ViewMatrix<T>& result) {
-    using detail_strassen::GetSubMatrixes;
+    using utils::GetSubMatrixes;
 
     if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 8) {
         result += SimpleMultiplication(GetMatrix(lhs), GetMatrix(rhs));

@@ -71,7 +71,7 @@ public:
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
         for (Index i = 0; i < ExistedRows(); ++i) {
-            for (Index j = begin_.column; j < ExistedColumns(); ++j) {
+            for (Index j = 0; j < ExistedColumns(); ++j) {
                 matrix_(i + begin_.row, j + begin_.column) += other(i, j);
             }
         }
@@ -82,7 +82,7 @@ public:
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
         for (Index i = 0; i < ExistedRows(); ++i) {
-            for (Index j = begin_.column; j < ExistedColumns(); ++j) {
+            for (Index j = 0; j < ExistedColumns(); ++j) {
                 matrix_(i + begin_.row, j + begin_.column) += other(i, j);
             }
         }
@@ -94,7 +94,7 @@ public:
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
         for (Index i = 0; i < ExistedRows(); ++i) {
-            for (Index j = begin_.column; j < ExistedColumns(); ++j) {
+            for (Index j = 0; j < ExistedColumns(); ++j) {
                 matrix_(i + begin_.row, j + begin_.column) -= other(i, j);
             }
         }
@@ -105,7 +105,7 @@ public:
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
         for (Index i = 0; i < ExistedRows(); ++i) {
-            for (Index j = begin_.column; j < ExistedColumns(); ++j) {
+            for (Index j = 0; j < ExistedColumns(); ++j) {
                 matrix_(i + begin_.row, j + begin_.column) -= other(i, j);
             }
         }
