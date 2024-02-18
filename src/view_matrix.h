@@ -1,27 +1,39 @@
 #pragma once
 
 #include "matrix.h"
+#include "view_matrix_helper.h"
 
 namespace s_fast {
 
-template <class T>
-class ViewMatrix {
+namespace view_matrix_detail {
+
+template <class T, bool IsConst>
+class RawViewMatrix {
 public:
     using Position = typename Matrix<T>::Position;
     using Index = typename Matrix<T>::Index;
-    using ReturnElementType = typename Matrix<T>::ReturnElementType;
 
-    ViewMatrix(const Matrix<T>& matrix, Position begin, Position end)
-        : matrix_(matrix), begin_(begin), end_(end) {
+    using ReturnElementType = view_matrix_helper::ReturnIfConst<T, IsConst>;
+    using ConstReturnElementType = helper::ReturnAs<T>;
+
+    using MatrixType = view_matrix_helper::ContainerType<Matrix<T>, IsConst>;
+    using ViewMatrixType = view_matrix_helper::ContainerType<RawViewMatrix<T, IsConst>, IsConst>;
+
+    RawViewMatrix(MatrixType& matrix, Position begin = {0, 0}, Position end = {-1, -1})
+        : matrix_(matrix),
+          begin_(begin),
+          end_(end.row == -1 ? Position{matrix.Rows(), matrix.Columns()} : end) {
     }
 
-    ViewMatrix(ViewMatrix<T>& matrix, Position begin, Position end)
+    RawViewMatrix(ViewMatrixType& matrix, Position begin = {0, 0}, Position end = {-1, -1})
         : matrix_(matrix.matrix_),
           begin_({matrix.begin_.row + begin.row, matrix.begin_.column + begin.column}),
-          end_({matrix.begin_.row + end.row, matrix.begin_.column + end.column}) {
+          end_(end.row == -1
+                   ? Position{matrix.begin_.row, matrix.begin_.column}
+                   : Position{matrix.begin_.row + end.row, matrix.begin_.column + end.column}) {
     }
 
-    ViewMatrix() = delete;
+    RawViewMatrix() = delete;
 
     Index Rows() const {
         return end_.row - begin_.row;
@@ -31,7 +43,13 @@ public:
         return end_.column - begin_.column;
     }
 
-    ReturnElementType operator()(Index row, Index column) const {
+    ReturnElementType operator()(Index row, Index column) {
+        assert(begin_.row + row < Rows() && begin_.column + column < Columns());
+
+        return matrix_(begin_.row + row, begin_.column + column);
+    }
+
+    ConstReturnElementType operator()(Index row, Index column) const {
         assert(row < Rows() && column < Columns());
 
         if (begin_.row + row >= matrix_.Rows() || begin_.column + column >= matrix_.Columns()) {
@@ -41,24 +59,46 @@ public:
         return matrix_(begin_.row + row, begin_.column + column);
     }
 
-    ViewMatrix<T>& operator+=(const ViewMatrix<T>& other) {
+    RawViewMatrix<T, IsConst>& operator+=(const RawViewMatrix<T, IsConst>& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (Index i = 0; i < Rows(); ++i) {
-            for (Index j = 0; j < Columns(); ++j) {
-                matrix_(begin_.row + i, begin_.column + j) += other(i, j);
+        for (Index i = begin_.row; i < std::min(matrix_.Rows(), end_.row); ++i) {
+            for (Index j = begin_.column; j < std::min(matrix_.Columns(), end_.column); ++j) {
+                matrix_(i, j) += other(i - begin_.row, j - begin_.column);
+            }
+        }
+
+        return *this;
+    }
+    RawViewMatrix<T, IsConst>& operator+=(const Matrix<T>& other) {
+        assert(Rows() == other.Rows() && Columns() == other.Columns());
+
+        for (Index i = begin_.row; i < std::min(matrix_.Rows(), end_.row); ++i) {
+            for (Index j = begin_.column; j < std::min(matrix_.Columns(), end_.column); ++j) {
+                matrix_(i, j) += other(i - begin_.row, j - begin_.column);
             }
         }
 
         return *this;
     }
 
-    ViewMatrix<T>& operator-=(const ViewMatrix<T>& other) {
+    RawViewMatrix<T, IsConst>& operator-=(const RawViewMatrix<T, IsConst>& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (Index i = 0; i < Rows(); ++i) {
-            for (Index j = 0; j < Columns(); ++j) {
-                matrix_(begin_.row + i, begin_.column + j) -= other(i, j);
+        for (Index i = begin_.row; i < std::min(matrix_.Rows(), end_.row); ++i) {
+            for (Index j = begin_.column; j < std::min(matrix_.Columns(), end_.column); ++j) {
+                matrix_(i, j) -= other(i - begin_.row, j - begin_.column);
+            }
+        }
+
+        return *this;
+    }
+    RawViewMatrix<T, IsConst>& operator-=(const Matrix<T>& other) {
+        assert(Rows() == other.Rows() && Columns() == other.Columns());
+
+        for (Index i = begin_.row; i < std::min(matrix_.Rows(), end_.row); ++i) {
+            for (Index j = begin_.column; j < std::min(matrix_.Columns(), end_.column); ++j) {
+                matrix_(i, j) -= other(i - begin_.row, j - begin_.column);
             }
         }
 
@@ -66,12 +106,13 @@ public:
     }
 
 private:
-    Matrix<T> matrix_;
+    MatrixType& matrix_;
 
     Position begin_;
     Position end_;
 
-    inline friend Matrix<T> operator+(const ViewMatrix<T>& lhs, const ViewMatrix<T>& rhs) {
+    inline friend Matrix<T> operator+(const RawViewMatrix<T, IsConst>& lhs,
+                                      const RawViewMatrix<T, IsConst>& rhs) {
         assert(lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns());
 
         Matrix<T> result(lhs.Rows(), lhs.Columns());
@@ -84,7 +125,8 @@ private:
 
         return result;
     }
-    inline friend Matrix<T> operator-(const ViewMatrix<T>& lhs, const ViewMatrix<T>& rhs) {
+    inline friend Matrix<T> operator-(const RawViewMatrix<T, IsConst>& lhs,
+                                      const RawViewMatrix<T, IsConst>& rhs) {
         assert(lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns());
 
         Matrix<T> result(lhs.Rows(), lhs.Columns());
@@ -98,7 +140,8 @@ private:
         return result;
     }
 
-    inline friend bool operator==(const ViewMatrix<T>& lhs, const ViewMatrix<T>& rhs) {
+    inline friend bool operator==(const RawViewMatrix<T, IsConst>& lhs,
+                                  const RawViewMatrix<T, IsConst>& rhs) {
         if (lhs.Rows() != rhs.Rows() && lhs.Columns() != rhs.Columns()) {
             return false;
         }
@@ -115,13 +158,36 @@ private:
     }
 };
 
-template <class T>
-bool operator!=(const ViewMatrix<T>& lhs, const ViewMatrix<T>& rhs) {
+template <class T, bool IsConst>
+bool operator!=(const RawViewMatrix<T, IsConst>& lhs, const RawViewMatrix<T, IsConst>& rhs) {
     return !(lhs == rhs);
 }
 
+}  // namespace view_matrix_detail
+
+template <class T>
+using ViewMatrix = view_matrix_detail::RawViewMatrix<T, false>;
+
+template <class T>
+using ConstViewMatrix = view_matrix_detail::RawViewMatrix<T, true>;
+
 template <class T>
 Matrix<T> GetMatrix(const ViewMatrix<T>& view_matrix) {
+    using Index = typename Matrix<T>::Index;
+
+    Matrix<T> matrix(view_matrix.Rows(), view_matrix.Columns());
+
+    for (Index i = 0; i < view_matrix.Rows(); ++i) {
+        for (Index j = 0; j < view_matrix.Columns(); ++j) {
+            matrix(i, j) = view_matrix(i, j);
+        }
+    }
+
+    return matrix;
+}
+
+template <class T>
+Matrix<T> GetMatrix(const ConstViewMatrix<T>& view_matrix) {
     using Index = typename Matrix<T>::Index;
 
     Matrix<T> matrix(view_matrix.Rows(), view_matrix.Columns());

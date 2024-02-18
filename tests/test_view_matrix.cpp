@@ -55,7 +55,7 @@ TEST(ViewMatrixCorrection, Plus) {
     Matrix<int> b({{3, 2, 1}, {6, 5, 4}, {9, 8, 7}});
     Matrix<int> c({{4, 4, 4}, {10, 10, 10}, {16, 16, 16}});
 
-    EXPECT_TRUE(ViewMatrix(a, {0, 0}, {3, 3}) + ViewMatrix(b, {0, 0}, {3, 3}) == c);
+    EXPECT_TRUE(ViewMatrix<int>(a, {0, 0}, {3, 3}) + ViewMatrix<int>(b, {0, 0}, {3, 3}) == c);
 }
 
 TEST(ViewMatrixCorrection, Minus) {
@@ -66,5 +66,5 @@ TEST(ViewMatrixCorrection, Minus) {
     Matrix<int> b({{3, 2, 1}, {6, 5, 4}, {9, 8, 7}});
     Matrix<int> c({{4, 4, 4}, {10, 10, 10}, {16, 16, 16}});
 
-    EXPECT_TRUE(ViewMatrix(c, {0, 0}, {3, 3}) - ViewMatrix(b, {0, 0}, {3, 3}) == a);
+    EXPECT_TRUE(ViewMatrix<int>(c, {0, 0}, {3, 3}) - ViewMatrix<int>(b, {0, 0}, {3, 3}) == a);
 }

@@ -5,4 +5,5 @@ add_executable(
   tests/test_strassen.cpp
   tests/test_simd_mult.cpp
   tests/test_view_matrix.cpp
+  tests/test_cache_oblivious_mult.cpp
 )

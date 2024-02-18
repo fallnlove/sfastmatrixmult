@@ -15,7 +15,7 @@ namespace detail_strassen {
 using Index = typename Matrix<int>::Index;
 using Position = typename Matrix<int>::Position;
 
-Index GetNearestPowerOfTwo(Index number) {
+inline Index GetNearestPowerOfTwo(Index number) {
     Index power_of_two = 1;
     while (power_of_two < number) {
         power_of_two *= 2;
@@ -23,25 +23,25 @@ Index GetNearestPowerOfTwo(Index number) {
     return power_of_two;
 }
 
-template <class T>
+template <class ContainerType>
 struct BlockMatrix {
-    ViewMatrix<T> left_top;
-    ViewMatrix<T> right_top;
-    ViewMatrix<T> left_bottom;
-    ViewMatrix<T> right_bottom;
+    ContainerType left_top;
+    ContainerType right_top;
+    ContainerType left_bottom;
+    ContainerType right_bottom;
 };
 
-template <class T>
-BlockMatrix<T> GetSubMatrixes(const Matrix<T>& matrix) {
+template <class InputContainer, class OuputContainer>
+BlockMatrix<OuputContainer> GetSubMatrixes(InputContainer& matrix) {
     Index rows = GetNearestPowerOfTwo(matrix.Rows());
     Index columns = GetNearestPowerOfTwo(matrix.Columns());
 
     assert(rows > 1 && columns > 1);
 
-    return {.left_top = ViewMatrix<T>(matrix, {0, 0}, {rows / 2, columns / 2}),
-            .right_top = ViewMatrix<T>(matrix, {0, columns / 2}, {rows / 2, columns}),
-            .left_bottom = ViewMatrix<T>(matrix, {rows / 2, 0}, {rows, columns / 2}),
-            .right_bottom = ViewMatrix<T>(matrix, {rows / 2, columns / 2}, {rows, columns})};
+    return {.left_top = OuputContainer(matrix, {0, 0}, {rows / 2, columns / 2}),
+            .right_top = OuputContainer(matrix, {0, columns / 2}, {rows / 2, columns}),
+            .left_bottom = OuputContainer(matrix, {rows / 2, 0}, {rows, columns / 2}),
+            .right_bottom = OuputContainer(matrix, {rows / 2, columns / 2}, {rows, columns})};
 }
 
 template <class T>
@@ -68,8 +68,8 @@ Matrix<T> Strassen(const Matrix<T>& lhs, const Matrix<T>& rhs) {
         return SimpleMultiplication(lhs, rhs);
     }
 
-    BlockMatrix<T> lhs_sub = GetSubMatrixes(lhs);
-    BlockMatrix<T> rhs_sub = GetSubMatrixes(rhs);
+    auto lhs_sub = GetSubMatrixes<const Matrix<T>, ConstViewMatrix<T>>(lhs);
+    auto rhs_sub = GetSubMatrixes<const Matrix<T>, ConstViewMatrix<T>>(rhs);
 
     Matrix<T> m1 =
         Strassen(lhs_sub.left_top + lhs_sub.right_bottom, rhs_sub.left_top + rhs_sub.right_bottom);
