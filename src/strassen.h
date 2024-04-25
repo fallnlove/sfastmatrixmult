@@ -17,7 +17,7 @@ namespace detail_strassen {
 template <class T>
 Matrix<T> Strassen(const ConstViewMatrix<T>& lhs, const ConstViewMatrix<T>& rhs) {
     using utils::BlockMatrix;
-    using utils::GetSubMatrixes;
+    using utils::GetSubMatrixesStrassen;
     using utils::SetSubMatrix;
 
     assert(lhs.Columns() == rhs.Rows());
@@ -26,8 +26,8 @@ Matrix<T> Strassen(const ConstViewMatrix<T>& lhs, const ConstViewMatrix<T>& rhs)
         return SimpleMultiplication(GetMatrix(lhs), GetMatrix(rhs));
     }
 
-    auto lhs_sub = GetSubMatrixes<const ConstViewMatrix<T>, ConstViewMatrix<T>>(lhs);
-    auto rhs_sub = GetSubMatrixes<const ConstViewMatrix<T>, ConstViewMatrix<T>>(rhs);
+    auto lhs_sub = GetSubMatrixesStrassen<const ConstViewMatrix<T>, ConstViewMatrix<T>>(lhs);
+    auto rhs_sub = GetSubMatrixesStrassen<const ConstViewMatrix<T>, ConstViewMatrix<T>>(rhs);
 
     Matrix<T> m1 =
         Strassen(lhs_sub.left_top + lhs_sub.right_bottom, rhs_sub.left_top + rhs_sub.right_bottom);

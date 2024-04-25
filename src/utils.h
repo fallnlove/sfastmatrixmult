@@ -26,9 +26,22 @@ struct BlockMatrix {
 };
 
 template <class InputContainer, class OuputContainer>
-BlockMatrix<OuputContainer> GetSubMatrixes(InputContainer& matrix) {
-    Index rows = GetNearestPowerOfTwo(matrix.Rows());
-    Index columns = GetNearestPowerOfTwo(matrix.Columns());
+BlockMatrix<OuputContainer> GetSubMatrixesStrassen(InputContainer& matrix) {
+    Index rows = matrix.Rows() + (matrix.Rows() % 2 == 0 ? 0 : 1);
+    Index columns = matrix.Columns() + (matrix.Columns() % 2 == 0 ? 0 : 1);
+
+    assert(rows > 1 && columns > 1);
+
+    return {.left_top = OuputContainer(matrix, {0, 0}, {rows / 2, columns / 2}),
+            .right_top = OuputContainer(matrix, {0, columns / 2}, {rows / 2, columns}),
+            .left_bottom = OuputContainer(matrix, {rows / 2, 0}, {rows, columns / 2}),
+            .right_bottom = OuputContainer(matrix, {rows / 2, columns / 2}, {rows, columns})};
+}
+
+template <class InputContainer, class OuputContainer>
+BlockMatrix<OuputContainer> GetSubMatrixesCacheOblivious(InputContainer& matrix) {
+    Index rows = matrix.Rows();
+    Index columns = matrix.Columns();
 
     assert(rows > 1 && columns > 1);
 

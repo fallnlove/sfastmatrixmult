@@ -12,16 +12,16 @@ namespace detail_cache_oblivious {
 template <class T>
 void CacheObliviousMult(const ConstViewMatrix<T>& lhs, const ConstViewMatrix<T>& rhs,
                         ViewMatrix<T>& result) {
-    using utils::GetSubMatrixes;
+    using utils::GetSubMatrixesCacheOblivious;
 
     if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 8) {
         result += SimpleMultiplication(GetMatrix(lhs), GetMatrix(rhs));
         return;
     }
 
-    auto lhs_sub = GetSubMatrixes<const ConstViewMatrix<T>, ConstViewMatrix<T>>(lhs);
-    auto rhs_sub = GetSubMatrixes<const ConstViewMatrix<T>, ConstViewMatrix<T>>(rhs);
-    auto result_sub = GetSubMatrixes<ViewMatrix<T>, ViewMatrix<T>>(result);
+    auto lhs_sub = GetSubMatrixesCacheOblivious<const ConstViewMatrix<T>, ConstViewMatrix<T>>(lhs);
+    auto rhs_sub = GetSubMatrixesCacheOblivious<const ConstViewMatrix<T>, ConstViewMatrix<T>>(rhs);
+    auto result_sub = GetSubMatrixesCacheOblivious<ViewMatrix<T>, ViewMatrix<T>>(result);
 
     CacheObliviousMult(lhs_sub.left_top, rhs_sub.left_top, result_sub.left_top);
     CacheObliviousMult(lhs_sub.right_top, rhs_sub.left_bottom, result_sub.left_top);
