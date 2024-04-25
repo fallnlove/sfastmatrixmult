@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "matrix.h"
-#include "simple_multiplication.h"
+#include "simd_multiplication.h"
 #include "view_matrix.h"
 #include "utils.h"
 
@@ -22,8 +22,8 @@ Matrix<T> Strassen(const ConstViewMatrix<T>& lhs, const ConstViewMatrix<T>& rhs)
 
     assert(lhs.Columns() == rhs.Rows());
 
-    if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 8) {
-        return SimpleMultiplication(GetMatrix(lhs), GetMatrix(rhs));
+    if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 16) {
+        return SimdMultiplication(GetMatrix(lhs), GetMatrix(rhs));
     }
 
     auto lhs_sub = GetSubMatrixesStrassen<const ConstViewMatrix<T>, ConstViewMatrix<T>>(lhs);

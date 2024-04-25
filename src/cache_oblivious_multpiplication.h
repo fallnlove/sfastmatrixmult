@@ -2,7 +2,7 @@
 
 #include "matrix.h"
 #include "view_matrix.h"
-#include "simple_multiplication.h"
+#include "simd_multiplication.h"
 #include "utils.h"
 
 namespace s_fast {
@@ -14,8 +14,8 @@ void CacheObliviousMult(const ConstViewMatrix<T>& lhs, const ConstViewMatrix<T>&
                         ViewMatrix<T>& result) {
     using utils::GetSubMatrixesCacheOblivious;
 
-    if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 8) {
-        result += SimpleMultiplication(GetMatrix(lhs), GetMatrix(rhs));
+    if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 16) {
+        result += SimdMultiplication(GetMatrix(lhs), GetMatrix(rhs));
         return;
     }
 
