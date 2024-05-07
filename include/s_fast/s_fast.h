@@ -1,0 +1,5 @@
+#include "../../src/matrix.h"
+#include "../../src/strassen.h"
+#include "../../src/simd_multiplication.h"
+#include "../../src/simple_multiplication.h"
+#include "../../src/cache_oblivious_multpiplication.h"
