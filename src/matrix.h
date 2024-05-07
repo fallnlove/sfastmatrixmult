@@ -10,6 +10,12 @@
 namespace s_fast {
 
 template <class T>
+class Matrix;
+
+template <class T>
+Matrix<T> SimdMultiplication(const Matrix<T>& lhs, const Matrix<T>& rhs);
+
+template <class T>
 class Matrix {
 public:
     using Index = int64_t;
@@ -24,17 +30,15 @@ public:
 
     Matrix(const Matrix& other) = default;
 
-    Matrix(Matrix&& other) noexcept : data_(std::move(other.data_)), columns_(other.columns_) {
-        other.columns_ = 0;
+    Matrix(Matrix&& other) noexcept
+        : data_(std::move(other.data_)), columns_(std::exchange(other.columns_, 0)) {
     }
 
     Matrix& operator=(const Matrix& other) = default;
 
     Matrix& operator=(Matrix&& other) noexcept {
         data_ = std::move(other.data_);
-        columns_ = other.columns_;
-
-        other.columns_ = 0;
+        columns_ = std::exchange(other.columns_, 0);
 
         return *this;
     }
@@ -69,18 +73,18 @@ public:
     }
 
     T& operator()(Index row, Index column) {
-        assert(row < Rows() && column < Columns());
+        assert(0 <= row && row < Rows() && 0 <= column && column < Columns());
 
         return data_[row * Columns() + column];
     }
 
     ReturnElementType operator()(Index row, Index column) const {
-        assert(row < Rows() && column < Columns());
+        assert(0 <= row && row < Rows() && 0 <= column && column < Columns());
 
         return data_[row * Columns() + column];
     }
 
-    Matrix<T>& operator+=(const Matrix<T>& other) {
+    Matrix& operator+=(const Matrix& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
         for (size_t i = 0; i < data_.size(); ++i) {
@@ -108,41 +112,22 @@ public:
         return *this;
     }
 
-    Matrix<T> GetSubMatrix(Position begin, Position end) const {
-        assert(end.row > begin.row && end.column > begin.column);
-
-        Matrix<T> sub_matrix(end.row - begin.row, end.column - begin.column);
-
-        for (Index row = begin.row; row < std::min(Rows(), end.row); ++row) {
-            for (Index column = begin.column; column < std::min(Columns(), end.column); ++column) {
-                sub_matrix(row - begin.row, column - begin.column) = (*this)(row, column);
-            }
-        }
-
-        return sub_matrix;
-    }
-
 private:
-    std::vector<T> data_;
-    Index columns_ = 0;
-
     inline friend Matrix<T> operator+(const Matrix<T>& lhs, const Matrix<T>& rhs) {
         Matrix<T> tmp(lhs);
         tmp += rhs;
         return tmp;
     }
     inline friend Matrix<T> operator+(Matrix<T>&& lhs, const Matrix<T>& rhs) {
-        Matrix<T> tmp(lhs);
+        Matrix tmp = std::move(lhs);
         tmp += rhs;
         return tmp;
     }
     inline friend Matrix<T> operator+(const Matrix<T>& lhs, Matrix<T>&& rhs) {
-        Matrix<T> tmp(lhs);
-        tmp += rhs;
-        return tmp;
+        return std::move(rhs) + lhs;
     }
     inline friend Matrix<T> operator+(Matrix<T>&& lhs, Matrix<T>&& rhs) {
-        Matrix<T> tmp(lhs);
+        Matrix tmp = std::move(lhs);
         tmp += rhs;
         return tmp;
     }
@@ -153,7 +138,7 @@ private:
         return tmp;
     }
     inline friend Matrix<T> operator-(Matrix<T>&& lhs, const Matrix<T>& rhs) {
-        Matrix<T> tmp(lhs);
+        Matrix tmp = std::move(lhs);
         tmp -= rhs;
         return tmp;
     }
@@ -163,7 +148,7 @@ private:
         return rhs;
     }
     inline friend Matrix<T> operator-(Matrix<T>&& lhs, Matrix<T>&& rhs) {
-        Matrix<T> tmp(lhs);
+        Matrix tmp = std::move(lhs);
         tmp -= rhs;
         return tmp;
     }
@@ -172,8 +157,11 @@ private:
         return lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns() && lhs.data_ == rhs.data_;
     }
 
-    template <class Y>
-    friend Matrix<Y> SimdMultiplication(const Matrix<Y>&, const Matrix<Y>&);
+    friend Matrix SimdMultiplication<T>(const Matrix&, const Matrix&);
+
+private:
+    std::vector<T> data_;
+    Index columns_ = 0;
 };
 
 template <class T>
@@ -210,11 +198,11 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T>& matrix) {
 
 template <class T, class Distribution>
 Matrix<T> Random(typename Matrix<T>::Index rows, typename Matrix<T>::Index columns,
-                 Distribution distribution) {
+                 Distribution distribution, uint64_t random_seed = 42) {
     using Index = typename Matrix<T>::Index;
 
     Matrix<T> random_matrix(rows, columns);
-    std::mt19937 random(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    std::mt19937 random(random_seed);
 
     for (Index i = 0; i < rows; ++i) {
         for (Index j = 0; j < columns; ++j) {

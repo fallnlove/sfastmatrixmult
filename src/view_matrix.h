@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include "matrix.h"
 #include "view_matrix_helper.h"
 
@@ -22,15 +23,15 @@ public:
     RawViewMatrix(MatrixType& matrix, Position begin = {0, 0}, Position end = {-1, -1})
         : matrix_(matrix),
           begin_(begin),
-          end_(end.row == -1 ? Position{matrix.Rows(), matrix.Columns()} : end) {
+          end_({end.row == -1 ? matrix.Rows() : end.row,
+                end.column == -1 ? matrix.Columns() : end.column}) {
     }
 
     RawViewMatrix(ViewMatrixType& matrix, Position begin = {0, 0}, Position end = {-1, -1})
         : matrix_(matrix.matrix_),
           begin_({matrix.begin_.row + begin.row, matrix.begin_.column + begin.column}),
-          end_(end.row == -1
-                   ? Position{matrix.begin_.row, matrix.begin_.column}
-                   : Position{matrix.begin_.row + end.row, matrix.begin_.column + end.column}) {
+          end_({end.row == -1 ? matrix.end_.row : matrix.begin_.row + end.row,
+                end.column == -1 ? matrix.end_.column : matrix.begin_.column + end.column}) {
     }
 
     RawViewMatrix() = delete;
@@ -52,13 +53,14 @@ public:
     }
 
     ReturnElementType operator()(Index row, Index column) {
-        assert(begin_.row + row < matrix_.Rows() && begin_.column + column < matrix_.Columns());
+        assert(0 <= row && begin_.row + row < matrix_.Rows() && 0 <= column &&
+               begin_.column + column < matrix_.Columns());
 
         return matrix_(begin_.row + row, begin_.column + column);
     }
 
     ConstReturnElementType operator()(Index row, Index column) const {
-        assert(row < Rows() && column < Columns());
+        assert(0 <= row && row < Rows() && 0 <= column && column < Columns());
 
         if (begin_.row + row >= matrix_.Rows() || begin_.column + column >= matrix_.Columns()) {
             return 0;
@@ -67,7 +69,8 @@ public:
         return matrix_(begin_.row + row, begin_.column + column);
     }
 
-    RawViewMatrix<T, IsConst>& operator+=(const RawViewMatrix<T, IsConst>& other) {
+    template <class TMatrix>
+    RawViewMatrix& operator+=(const TMatrix& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
         for (Index i = 0; i < ExistedRows(); ++i) {
@@ -78,30 +81,9 @@ public:
 
         return *this;
     }
-    RawViewMatrix<T, IsConst>& operator+=(const Matrix<T>& other) {
-        assert(Rows() == other.Rows() && Columns() == other.Columns());
 
-        for (Index i = 0; i < ExistedRows(); ++i) {
-            for (Index j = 0; j < ExistedColumns(); ++j) {
-                matrix_(i + begin_.row, j + begin_.column) += other(i, j);
-            }
-        }
-
-        return *this;
-    }
-
-    RawViewMatrix<T, IsConst>& operator-=(const RawViewMatrix<T, IsConst>& other) {
-        assert(Rows() == other.Rows() && Columns() == other.Columns());
-
-        for (Index i = 0; i < ExistedRows(); ++i) {
-            for (Index j = 0; j < ExistedColumns(); ++j) {
-                matrix_(i + begin_.row, j + begin_.column) -= other(i, j);
-            }
-        }
-
-        return *this;
-    }
-    RawViewMatrix<T, IsConst>& operator-=(const Matrix<T>& other) {
+    template <class TMatrix>
+    RawViewMatrix& operator-=(const TMatrix& other) {
         assert(Rows() == other.Rows() && Columns() == other.Columns());
 
         for (Index i = 0; i < ExistedRows(); ++i) {
@@ -113,44 +95,27 @@ public:
         return *this;
     }
 
-private:
-    MatrixType& matrix_;
-
-    Position begin_;
-    Position end_;
-
-    inline friend Matrix<T> operator+(const RawViewMatrix<T, IsConst>& lhs,
-                                      const RawViewMatrix<T, IsConst>& rhs) {
+    friend Matrix<T> operator+(const RawViewMatrix& lhs, const RawViewMatrix& rhs) {
         assert(lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns());
 
         Matrix<T> result(lhs.Rows(), lhs.Columns());
-
-        for (Index i = 0; i < lhs.Rows(); ++i) {
-            for (Index j = 0; j < lhs.Columns(); ++j) {
-                result(i, j) = lhs(i, j) + rhs(i, j);
-            }
-        }
-
+        RawViewMatrix<T, false> result_view(result);
+        result_view += lhs;
+        result_view += rhs;
         return result;
     }
-    inline friend Matrix<T> operator-(const RawViewMatrix<T, IsConst>& lhs,
-                                      const RawViewMatrix<T, IsConst>& rhs) {
+    friend Matrix<T> operator-(const RawViewMatrix& lhs, const RawViewMatrix& rhs) {
         assert(lhs.Rows() == rhs.Rows() && lhs.Columns() == rhs.Columns());
 
         Matrix<T> result(lhs.Rows(), lhs.Columns());
-
-        for (Index i = 0; i < lhs.Rows(); ++i) {
-            for (Index j = 0; j < lhs.Columns(); ++j) {
-                result(i, j) = lhs(i, j) - rhs(i, j);
-            }
-        }
-
+        RawViewMatrix<T, false> result_view(result);
+        result_view += lhs;
+        result_view -= rhs;
         return result;
     }
 
-    inline friend bool operator==(const RawViewMatrix<T, IsConst>& lhs,
-                                  const RawViewMatrix<T, IsConst>& rhs) {
-        if (lhs.Rows() != rhs.Rows() && lhs.Columns() != rhs.Columns()) {
+    friend bool operator==(const RawViewMatrix& lhs, const RawViewMatrix& rhs) {
+        if (lhs.Rows() != rhs.Rows() || lhs.Columns() != rhs.Columns()) {
             return false;
         }
 
@@ -164,6 +129,12 @@ private:
 
         return true;
     }
+
+private:
+    MatrixType& matrix_;
+
+    Position begin_;
+    Position end_;
 };
 
 template <class T, bool IsConst>

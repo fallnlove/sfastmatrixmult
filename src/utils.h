@@ -9,13 +9,8 @@ namespace utils {
 using Index = typename Matrix<int>::Index;
 using Position = typename Matrix<int>::Position;
 
-inline Index GetNearestPowerOfTwo(Index number) {
-    Index power_of_two = 1;
-    while (power_of_two < number) {
-        power_of_two *= 2;
-    }
-    return power_of_two;
-}
+constexpr Index kStopStrassenConstant = 16;
+constexpr Index kStopCacheObliviousConstant = 16;
 
 template <class ContainerType>
 struct BlockMatrix {

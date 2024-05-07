@@ -13,8 +13,9 @@ template <class T>
 void CacheObliviousMult(const ConstViewMatrix<T>& lhs, const ConstViewMatrix<T>& rhs,
                         ViewMatrix<T>& result) {
     using utils::GetSubMatrixesCacheOblivious;
+    using utils::kStopCacheObliviousConstant;
 
-    if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 16) {
+    if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= kStopCacheObliviousConstant) {
         result += SimdMultiplication(GetMatrix(lhs), GetMatrix(rhs));
         return;
     }

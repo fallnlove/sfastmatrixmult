@@ -25,9 +25,40 @@ TEST(ViewMatrixCorrection, Constructors) {
 
     std::vector<std::vector<int>> mat = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
     Matrix<int> d({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}});
+    ViewMatrix<int> d_view(d);
     for (Index i = 0; i < mat.size(); ++i) {
         for (Index j = 0; j < mat[i].size(); ++j) {
-            EXPECT_EQ(d(i, j), mat[i][j]);
+            EXPECT_EQ(d_view(i, j), mat[i][j]);
+        }
+    }
+}
+
+TEST(ViewMatrixCorrection, ConstructorsFromView) {
+    using s_fast::Matrix;
+    using s_fast::ViewMatrix;
+    using Index = Matrix<int>::Index;
+
+    Matrix<int> matrix({});
+    ViewMatrix<int> view_a(matrix, {0, 0}, {0, 0});
+    ViewMatrix<int> view_view_a(view_a, {0, 0}, {0, 0});
+    EXPECT_EQ(view_view_a.Rows(), 0);
+    EXPECT_EQ(view_view_a.Columns(), 0);
+
+    ViewMatrix<int> view_view_b(view_a, {1, 2}, {12, 5});
+    EXPECT_EQ(view_view_b.Rows(), 11);
+    EXPECT_EQ(view_view_b.Columns(), 3);
+
+    std::vector<std::vector<int>> mat = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    Matrix<int> d({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}});
+    ViewMatrix<int> d_view(d);
+    ViewMatrix<int> d_view_view(d_view);
+
+    EXPECT_EQ(d_view_view.Rows(), 3);
+    EXPECT_EQ(d_view_view.Columns(), 3);
+
+    for (Index i = 0; i < mat.size(); ++i) {
+        for (Index j = 0; j < mat[i].size(); ++j) {
+            EXPECT_EQ(d_view_view(i, j), mat[i][j]);
         }
     }
 }
@@ -56,6 +87,10 @@ TEST(ViewMatrixCorrection, Plus) {
     Matrix<int> c({{4, 4, 4}, {10, 10, 10}, {16, 16, 16}});
 
     EXPECT_TRUE(ViewMatrix<int>(a, {0, 0}, {3, 3}) + ViewMatrix<int>(b, {0, 0}, {3, 3}) == c);
+
+    auto a_view = ViewMatrix<int>(a, {0, 0}, {3, 3});
+    a_view += ViewMatrix<int>(b, {0, 0}, {3, 3});
+    EXPECT_TRUE(a_view == c);
 }
 
 TEST(ViewMatrixCorrection, Minus) {
@@ -67,4 +102,21 @@ TEST(ViewMatrixCorrection, Minus) {
     Matrix<int> c({{4, 4, 4}, {10, 10, 10}, {16, 16, 16}});
 
     EXPECT_TRUE(ViewMatrix<int>(c, {0, 0}, {3, 3}) - ViewMatrix<int>(b, {0, 0}, {3, 3}) == a);
+
+    auto c_view = ViewMatrix<int>(a, {0, 0}, {3, 3});
+    c_view -= ViewMatrix<int>(b, {0, 0}, {3, 3});
+    EXPECT_TRUE(c_view == a);
+}
+
+TEST(ViewMatrixCorrection, GetMatrix) {
+    using s_fast::GetMatrix;
+    using s_fast::Matrix;
+    using s_fast::ViewMatrix;
+
+    Matrix<int> a({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}});
+
+    ViewMatrix<int> view_a = ViewMatrix<int>(a);
+    Matrix<int> a_copy = GetMatrix(view_a);
+
+    EXPECT_TRUE(a_copy == a);
 }

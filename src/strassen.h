@@ -18,11 +18,12 @@ template <class T>
 Matrix<T> Strassen(const ConstViewMatrix<T>& lhs, const ConstViewMatrix<T>& rhs) {
     using utils::BlockMatrix;
     using utils::GetSubMatrixesStrassen;
+    using utils::kStopStrassenConstant;
     using utils::SetSubMatrix;
 
     assert(lhs.Columns() == rhs.Rows());
 
-    if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= 16) {
+    if (std::min({lhs.Rows(), lhs.Columns(), rhs.Columns()}) <= kStopStrassenConstant) {
         return SimdMultiplication(GetMatrix(lhs), GetMatrix(rhs));
     }
 

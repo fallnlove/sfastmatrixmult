@@ -37,6 +37,9 @@ TEST(MatrixCorrection, Plus) {
     Matrix<int> c({{4, 4, 4}, {10, 10, 10}, {16, 16, 16}});
 
     EXPECT_TRUE(a + b == c);
+    EXPECT_TRUE(std::move(Matrix<int>({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}})) + b == c);
+    EXPECT_TRUE(a + std::move(Matrix<int>({{3, 2, 1}, {6, 5, 4}, {9, 8, 7}})) == c);
+    EXPECT_TRUE(std::move(a) + std::move(b) == c);
 }
 
 TEST(MatrixCorrection, Minus) {
@@ -47,6 +50,9 @@ TEST(MatrixCorrection, Minus) {
     Matrix<int> c({{4, 4, 4}, {10, 10, 10}, {16, 16, 16}});
 
     EXPECT_TRUE(c - b == a);
+    EXPECT_TRUE(std::move(Matrix<int>({{4, 4, 4}, {10, 10, 10}, {16, 16, 16}})) - b == a);
+    EXPECT_TRUE(c - std::move(Matrix<int>({{3, 2, 1}, {6, 5, 4}, {9, 8, 7}})) == a);
+    EXPECT_TRUE(std::move(c) - std::move(b) == a);
 }
 
 TEST(MatrixCorrection, Transpose) {
