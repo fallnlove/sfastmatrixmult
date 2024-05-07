@@ -1,5 +1,29 @@
 cmake_minimum_required(VERSION 3.14)
-project(s_fast)
+project(s_fast
+  VERSION 1.0.0
+  LANGUAGES CXX
+  DESCRIPTION "Matrix lib for C++")
+
+add_library(s_fast INTERFACE)
+add_library(s_fast::s_fast ALIAS s_fast)
+
+set_target_properties(s_fast PROPERTIES LINKER_LANGUAGE CXX)
+
+set(public_headers
+    include/s_fast/s_fast.h)
+include(CMakePackageConfigHelpers)
+
+target_include_directories(s_fast
+  INTERFACE
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
+        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+
+set_target_properties(s_fast PROPERTIES
+    PUBLIC_HEADER "${public_headers}"
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+    VERSION ${PROJECT_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,7 +41,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   xsimd
   GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
-  GIT_TAG c1247bffa8fc36de7380a5cd42673a3b32f74c97
+  GIT_TAG 13.0.0
 )
 
 FetchContent_MakeAvailable(googletest)
