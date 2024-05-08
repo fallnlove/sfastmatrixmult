@@ -43,10 +43,35 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
   GIT_TAG 13.0.0
 )
+FetchContent_Declare(
+  Eigen
+  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+  GIT_TAG 3.4.0
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+)
+FetchContent_Declare(
+  Boost
+  GIT_REPOSITORY https://github.com/boostorg/boost.git
+  GIT_TAG boost-1.85.0
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+)
+
+set(BUILD_TESTING OFF)
+set(EIGEN_BUILD_TESTING OFF)
+set(EIGEN_MPL2_ONLY ON)
+set(EIGEN_BUILD_PKGCONFIG OFF)
+set(EIGEN_BUILD_DOC OFF)
 
 FetchContent_MakeAvailable(googletest)
 FetchContent_MakeAvailable(benchmark)
 FetchContent_MakeAvailable(xsimd)
+FetchContent_MakeAvailable(Eigen)
+FetchContent_MakeAvailable(Boost)
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+message(CHECK_PASS "fetched")
 
 include(tests/sources.cmake)
 
@@ -56,8 +81,11 @@ enable_testing()
 
 target_link_libraries(
   bench_mult
+  PRIVATE
   xsimd
   benchmark::benchmark
+  Eigen3::Eigen
+  Boost::numeric_ublas
 )
 
 target_compile_options(

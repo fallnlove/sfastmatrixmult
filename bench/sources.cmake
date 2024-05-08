@@ -1,5 +1,7 @@
 add_executable(
   bench_mult
+  bench/becnh_eigen.cpp
+  bench/bench_boost.cpp
   bench/bench_simple_mult.cpp
   bench/bench_simd.cpp
   bench/bench_strassen.cpp
